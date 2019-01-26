@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager List</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+		var getManagerModule = angular.module("getManager", []);
+		getManagerModule.controller("getManagerController", ($scope, $http, $location)=>{
+
+			$scope.username = sessionStorage.getItem('managername');
+			/*
+				get all managers
+			*/
+			var url = "/ManagerAccount";
+
+			$http.get(url).then((response)=>{
+				$scope.managers = response.data;
+			}, (response)=>{
+				$scope.getErrMsg = "Error Status: " +  response.statusText;
+			});
+
+
+		});
+	</script>
+</head>
+<body ng-app="getManager" ng-controller="getManagerController">
+
+		<!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid" ng-app="getManager">
+            <nav class="navbar navbar-custom">
+                <div class="container">
+					<div class="col-md-9">
+						<div class="navbar-header col-md-2 logo" ng-controller="getManagerController">
+							<h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+						</div>
+						<div>
+							<ul class="col-md-7 nav navbar-nav menu" ng-controller="getManagerController">
+								<li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ username }}</a></li>
+								<li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+								<li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>				
+							</ul>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+            </nav>
+			<div class="clearfix"></div>
+        </div>
+
+	<!--
+		body
+	-->
+	<div class="text-center">
+		<h2>MANAGERS LIST</h2>
+	</div>
+	<div class="container" ng-app="getManager" style="margin-top: 20px">
+		<div class="col-md-3"></div>
+		<div class="col-md-6 text-center" ng-controller="getManagerController">
+			<table class="table table-striped">
+				<thead>
+					<th>Manager Name</th>
+					<th>Username</th>
+					<th>Email</th>
+					<th>Telephone</th>
+				</thead>
+
+				<tbody>
+					<tr ng-repeat="manager in managers">
+						<td>{{ manager.name }}</td>
+						<td>{{ manager.username }}</td>
+						<td>{{ manager.email }}</td>
+						<td>{{ manager.tel }}</td>
+					</tr>
+				</tbody>
+			</table>
+			<a href="/managerHome"><button class="btn btn-default">Back To Home Page</button></a>
+		</div>
+	</div>
+</body>
+</html>

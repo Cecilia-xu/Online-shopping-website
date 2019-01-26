@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add New Manager</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+		var newManagerModule = angular.module("addNew", []);
+		newManagerModule.controller('addNewController', function($scope, $http) {
+
+			//get manager's name
+			$scope.current_username = sessionStorage.getItem('managername');
+
+			$scope.clearSession = function(){
+				sessionStorage.clear();
+			}
+
+			$scope.newrolePost = function() {
+				
+				var url = '/ManagerAccount/newrole';
+				var config = {
+					headers : {
+						'Accept': 'application/json'
+					}
+				};
+				var data = {
+					name: $scope.real_name,
+					username: $scope.username,
+					password: "123456",
+					email: $scope.email,
+					tel: $scope.telephone
+				};
+				$http.post(url,JSON.stringify(data), config).then(function (response){
+					$scope.postMsg = response.data;
+					if(!$scope.postMsg.Failed){
+						alert("New manager named " + $scope.real_name 
+							+ "has been successfully built! The initial password is 123456, please remember to reset your password!");
+					}
+					else{
+					}
+				}, function (response){
+					$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+				});
+
+				$scope.real_name = "";
+				$scope.username = "";
+				$scope.email = "";
+				$scope.telephone = "";
+			}
+		});
+	</script>
+</head>
+<body ng-app="addNew">
+
+	<!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid">
+            <nav class="navbar navbar-custom">
+                <div class="container">
+					<div class="col-md-9">
+						<div class="navbar-header col-md-2 logo" ng-controller="addNewController">
+							<h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+						</div>
+						<div>
+							<ul class="col-md-7 nav navbar-nav menu" ng-controller="addNewController">
+								<li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ current_username }}</a></li>
+								<li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+								<li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>				
+							</ul>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+            </nav>
+			<div class="clearfix"></div>
+        </div>
+
+    <!--=-------
+        Body
+    ------------>
+	<div class="col-md-3" ></div>
+	<div class="col-md-6" ng-controller="addNewController">
+		<div class="text-center">
+    		<h2>NEW MANAGER</h2>
+    		<h4>Please complete required information below to build a new manager.</h4>
+    	</div>
+    	<form ng-submit="newrolePost()" style="margin-top: 60px" name="registerform">
+    		<div class="form-group">
+                <label for="real_name">Real Name *</label>
+                <input ng-model="real_name" id="real_name" class="form-control" type="text" required name="real_name" placeholder="Enter Real Name">
+            </div>
+
+            <div class="form-group">
+                <label for="username">UserName *</label>
+                <input ng-model="username" id="username" class="form-control" type="text" required name="username" placeholder="Enter UserName">
+            </div>
+
+          	<div class="form-group">
+                <label for="email">Email *</label>
+                <input ng-model="email" id="email" class="form-control" type="email" required name="email" placeholder="Enter Email">
+                <div class="alert alert-danger col-md-12 text-center" ng-show = "registerform.email.$dirty && registerform.email.$invalid">
+					<span ng-show="registerform.email.$error.email">Illegal email</span>
+				</div>
+            </div>
+
+  			<div class="form-group">
+                <label for="telephone">Telephone *</label>
+                <input ng-model="telephone" id="telephone" class="form-control" type="text" required name="telephone" placeholder="Enter Telephone">
+            </div>
+
+            <div>
+				<div class="text-center" ng-show = "postMsg.Failed">
+					<div class="alert alert-danger">{{postMsg.message}}</div>
+				</div>
+			</div>
+
+			<div>
+                <div class="text-center">
+              	    <button type="reset" value="Reset" class="btn btn-default">Reset</button>
+                    <button type="submit" value="Login" class="btn btn-default">Okay</button>
+                    <a href="/managerHome"><button class="btn btn-default">Cancel</button></a>
+                </div>
+            </div>
+    	</form>
+	</div>
+</body>
+</html>

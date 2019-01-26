@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager List</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+		var getTransactionModule = angular.module("getTransaction", []);
+		getTransactionModule.controller("getTransactionController", ($scope, $http, $location)=>{
+
+			//get manager's name
+            $scope.current_username = sessionStorage.getItem('managername');
+
+            $scope.clearSession = function(){
+                sessionStorage.clear();
+            }
+
+
+			/*
+				get all transactions
+			*/
+			var url = "/ManageTransaction";
+
+			$http.get(url).then((response)=>{
+				$scope.transactions = response.data;
+			}, (response)=>{
+				$scope.getErrMsg = "Error Status: " +  response.statusText;
+			});
+
+			/*
+				delete one particular user
+			*/
+			$scope.deleteTransaction = function (tid) {
+				$http.delete(url+'/'+tid).then(function(response){
+					$http.get(url).then((response2)=>{
+						$scope.transactions = response2.data;
+					}, (response2)=>{
+						$scope.getErrMsg = "Error Status: " +  response2.statusText;
+					});
+				}, function(response){
+					alert("fail to delete");
+				});
+			};
+
+			$scope.seeDetail = function(productid) {
+                sessionStorage.setItem("productID", productid);
+                location.href = '/updateProductInfo';
+            }
+		});
+	</script>
+</head>
+<body ng-app="getTransaction">
+
+	<!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid">
+            <nav class="navbar navbar-custom">
+                <div class="container">
+					<div class="col-md-9">
+						<div class="navbar-header col-md-2 logo" ng-controller="getTransactionController">
+							<h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+						</div>
+						<div>
+							<ul class="col-md-7 nav navbar-nav menu" ng-controller="getTransactionController">
+								<li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ current_username }}</a></li>
+								<li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+								<li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>				
+							</ul>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+            </nav>
+			<div class="clearfix"></div>
+        </div>
+
+	<div class="text-center">
+		<h2>Transaction List</h2>
+	</div>
+	<div class="container" style="margin-top: 20px">
+		<div class="col-md-1"></div>
+		<div class="col-md-6 text-center" ng-controller="getTransactionController">
+			<table class="table table-striped">
+				<thead>
+					<th>Transaction ID</th>
+					<th>Date</th>
+					<th>User ID</th>
+					<th>Product ID</th>
+					<th>Price</th>
+					<th>Quantity</th>
+					<th></th>
+				</thead>
+
+				<tbody>
+					<tr ng-repeat="t in transactions">
+						<td>{{ t._id }}</td>
+						<td>{{ t.transaction_date }}</td>
+						<td>{{ t.user_ID }}</td>
+						<td >
+							<a ng-click="(seeDetail(t.product_ID))">
+								{{ t.product_ID }}
+							</a>
+						</td>
+						<td>{{ t.price }}</td>
+						<td>{{ t.quantity }}</td>
+						<td><span class="glyphicon glyphicon-trash" ng-click="deleteTransaction(t._id)"></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<div align="left">
+				<a href="/managerHome"><button class="btn btn-default">Back To Home Page</button></a>
+			</div>			
+		</div>
+	</div>
+</body>
+</html>

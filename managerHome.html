@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager Home Page</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+		var homeModule = angular.module("home", []);
+		homeModule.controller('homeController', function($scope, $http) {
+
+			//get manager's name
+			$scope.username = sessionStorage.getItem('managername');
+
+			/*
+				if the initial password hasn't been changed
+				there comes an alert and jump to the change-password page
+			*/
+			$scope.managerid = sessionStorage.getItem('managerid');
+			var url = "/ManagerAccount/" + $scope.managerid;
+			
+			$http.get(url).then(function(response){
+				$scope.manager = response.data;
+				
+
+				if ($scope.manager.password === '123456') {
+					alert('You have not changed your initial password yet! Please change your password right now!');
+					location.href = '/updateManagerInfo';
+				}
+
+			}, function(response){
+				$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+			});
+
+			$scope.clearSession = function(){
+				sessionStorage.clear();
+			}
+
+		});
+		// $scope.username = sessionStorage.getItem('username');
+		
+	</script>
+</head>
+<body ng-app="home">
+
+	<!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid">
+            <nav class="navbar navbar-custom">
+                <div class="container">
+					<div class="col-md-9">
+						<div class="navbar-header col-md-2 logo" ng-controller="homeController">
+							<h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+						</div>
+						<div>
+							<ul class="col-md-7 nav navbar-nav menu" ng-controller="homeController">
+								<li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ username }}</a></li>
+								<li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+								<li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>				
+							</ul>
+						</div>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+            </nav>
+			<div class="clearfix"></div>
+        </div>
+
+
+	<!------------
+	body
+	-------------->
+	<div ng-controller="homeController">
+		<div class="text-center" >
+			
+			<h3>Please Choose The Part You're Going To Manage</h3>
+		</div>
+
+
+		<div class="container" style="margin-top: 40px">
+			<div class="col-md-4 panel panel-default">
+				<div class="panel-heading">Manage manager accounts</div>
+				<div class="panel-body">
+					<ul class="list-group">
+						<a href="/getAllManager"><li class="list-group-item">check all managers</li></a>
+						<a href="/newManager"><li class="list-group-item">set up new manager</li></a>
+					</ul>
+				</div>
+
+				<!-- <button class="btn btn-default">Work on it</button> -->
+			</div>
+
+			<div class="col-md-4 panel panel-default">
+				<div class="panel-heading">Manage user accounts</div>
+				<div class="panel-body">
+					<ul class="list-group">
+						<a href="/getAllUser"><li class="list-group-item">check all users</li></a>
+					</ul>
+				</div>
+
+			</div>
+
+			<div class="col-md-4 panel panel-default">
+				<div class="panel-heading">Manage products</div>
+				<div class="panel-body">
+					<ul class="list-group">
+						<a href="/addNewProduct"><li class="list-group-item">add new products</li></a>
+						<a href="/viewProduct"><li class="list-group-item">check all products</li></a>
+						<a href="/getAllTransaction"><li class="list-group-item">check all transaction records</li></a>
+					</ul>
+				</div>
+
+				
+			</div>
+		</div>
+	</div>
+	
+
+	<!------------------
+        footer
+     -------------------->
+	<script>
+	function initialize()
+	{
+	    var mapProp = {
+	        center:new google.maps.LatLng(40.4447451,-79.9611917),
+	        zoom:15,
+	        mapTypeId:google.maps.MapTypeId.ROADMAP
+	    };
+	    var map=new google.maps.Map(document.getElementById("googleMap"), mapProp);
+	}
+ 
+	google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+	<div class="footer">
+		<div class="container">
+			<div class="footer_top">
+				<div class="col-md-3">
+					<h3>Our Stores</h3>
+					<address class="address">
+						<p>135 North Bellefield Avenue, <br>
+							Pittsburgh, PA 15260</p>
+						<dl>
+							<dt></dt>
+							<dd>phone:<span> +1(412)-254-2478</span></dd>
+							<dd>E-mail:&nbsp; <span>info(at)buyshop.com</span></dd>
+						</dl>
+					</address>
+					<ul class="footer_social">
+						<li><a href=""> <i class="fb"> </i> </a></li>
+						<li><a href=""><i class="tw"> </i> </a></li>
+						<li><a href=""><i class="google"> </i> </a></li>
+						<li><a href=""><i class="instagram"> </i> </a></li>
+					</ul>
+				</div>
+				<div id="googleMap" style="height:240px;" class ="col-md-6" ></div>
+				<div class="col-md-3">
+					<h3>Support</h3>
+					<ul class="list">
+						<li><a href="#">Terms & Conditions</a></li>
+						<li><a href="#">FAQ</a></li>
+						<li><a href="#">Services</a></li>
+						<li><a href="#">Track Order</a></li>
+						<li><a href="#">About Us</a></li>
+						<li><a href="#">Contact Us</a></li>
+					</ul>
+					<div class="clearfix"> </div>
+				</div>
+				<div class="clearfix"> </div>
+			</div>
+			<div class="footer_bottom">
+				<div class="copy">
+					<p>Copyright © 2018 Buy_shop. Pitt IS 2560 All Rights Reserved.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

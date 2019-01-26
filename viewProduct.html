@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Product List</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+  <script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+ <script>
+  var viewModule = angular.module('viewProduct', []);
+
+        viewModule.controller('viewController', ($scope, $http, $location) =>{
+
+            //get manager's name
+            $scope.current_username = sessionStorage.getItem('managername');
+
+            $scope.clearSession = function(){
+                sessionStorage.clear();
+            }
+
+            // $scope.viewProduct = function(){
+                var url = "/ManageProduct";
+
+                $http.get(url).then((response) => {
+                    $scope.viewProduct = response.data;
+                    $scope.productNames = []
+                    $scope.profit = [];
+                    for (var i in $scope.viewProduct){
+                        $scope.productNames.push(JSON.stringify($scope.viewProduct[i].productName));
+                        $scope.profit.push($scope.viewProduct[i].volume*$scope.viewProduct[i].price);
+                    }
+                    Highcharts.chart('chart', {
+                    chart: {
+                        type: 'bar'
+                    },
+                    title: {
+                        text: 'Selling Data'
+                    },
+                    xAxis: {
+                        categories: $scope.productNames,
+                        title: {
+                            text: null
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        max: 5000,
+                        title: {
+                            text: 'Selling volume',
+                            align: 'high'
+                        },
+                        labels: {
+                            overflow: 'justify'
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            dataLabels: {
+                                enabled: true,
+                                allowOverlap: true
+                            }
+                        }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'top',
+                        x: -40,
+                        y: 100,
+                        floating: true,
+                        borderWidth: 1,
+                        backgroundColor: ((Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF'),
+                        shadow: true
+                    },
+                    series: [{
+                        name: 'Profit',
+                        data: $scope.profit
+                    }]
+                });
+                    
+                }, (response) => {
+                    $scope.getErrMsg = "Error Status: " +  response.statusText;
+                });
+
+
+                //alert($scope.profit)
+            // }
+                    
+            $scope.deleteProduct = function (productid) {
+                var url = "/ManageProduct";
+                $http.delete(url+'/'+productid).then(function(response){
+                    $http.get(url).then((response2)=>{
+                        $scope.viewProduct = response2.data;
+                    }, (response2)=>{
+                        $scope.getErrMsg = "Error Status: " +  response2.statusText;
+                    });
+                }, function(response){
+                    alert("fail to delete");
+                });
+            };                 
+
+                    
+                    
+            $scope.seeDetail = function(productid) {
+                sessionStorage.setItem("productID", productid);
+                location.href = '/updateProductInfo';
+            }
+        });
+ </script>
+</head>
+ 
+<body class="text-center" ng-app="viewProduct" ng-controller="viewController"> 
+
+    <!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid" >
+            <nav class="navbar navbar-custom">
+                <div class="container">
+                    <div class="col-md-9">
+                        <div class="navbar-header col-md-2 logo" ng-controller="viewController">
+                            <h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+                        </div>
+                        <div>
+                            <ul class="col-md-7 nav navbar-nav menu" ng-controller="viewController">
+                                <li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ current_username }}</a></li>
+                                <li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+                                <li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>             
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </nav>
+            <div class="clearfix"></div>
+        </div>
+
+    <div class="container"> 
+        <div>
+            <h1>View All Products</h1>
+            <h4>View all products here and click product ID to update information.</h4>
+		</div>
+            <div >
+                   <!-- <button ng-click="viewProduct()" type="button" class="btn btn-default">View all products</button>    -->
+                    <table class="table table-striped" ng-show="viewProduct.length">
+                        <caption>Product Information</caption>
+                        <tr>
+                                <th>Product ID</th>
+                                <th>Product Name</th>
+                                <th>Kind</th>
+                                <th>Size</th>
+                                <th>Inventory Amount</th>
+                                <th>Price</th>
+                                <th>Volume</th>
+                                <th>Img</th>
+                                <th>Description</th>
+                                <th></th>
+                        </tr>
+                        <tr ng-repeat="product in viewProduct">
+                                <td>
+                                    <a ng-click="seeDetail(product._id)">
+                                        {{product._id}} 
+                                    </a>
+                                </td>
+                                <td>{{product.productName}}</td>
+                                <td>{{product.kind}}</td>
+                                <td>{{product.size}}</td>
+                                <td>{{product.inventory_amount}}</td>
+                                <td>{{product.price}}</td>
+                                <td>{{product.volume}}</td>
+                                <td>
+                                    <img ng-src="{{product.img}}" width="50px" height="50px">
+                                </td>
+                                <td>{{product.description}}</td>
+                                <td><span class="glyphicon glyphicon-trash" ng-click="deleteProduct(product._id)"></span></td>
+                        </tr>
+                    </table>
+
+                <div>{{getErrMsg}}</div>
+
+                <a href="/managerHome"><button class="btn btn-default" style="margin-top: 50px">Back</button></a>
+
+            </div>
+      
+    </div>	
+
+    <div>
+        <div id="chart" style="min-width:400px;height:400px"></div>
+    </div>
+</div>
+</body>
+</html>

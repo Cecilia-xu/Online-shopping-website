@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>User Profile</title>
+        <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/styleUser.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/newheader.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	</head>
+	<script>
+		profileModule = angular.module('profile',[]);
+		profileModule.controller('profileController',function($scope,$http){
+			
+			// find the user
+			if (!sessionStorage.getItem('userid')){
+				alert("Please login");
+				location.href = '/login';
+			}else{
+			
+				// if(sessionStorage.getItem('usertype') == 'Individual'){
+				// 	var url = '/userctrl/Home_Customer/' + sessionStorage.getItem('userid');
+				// }else{
+				// 	var url = '/userctrl/Business_Customer/' + sessionStorage.getItem('userid');
+				// }
+				var url = '/userctrl/' + sessionStorage.getItem('userid');
+				$scope.userid = sessionStorage.getItem('userid');
+				$http.get(url).then(function (response){
+					$scope.user = response.data;
+					// $scope.usertype = sessionStorage.getItem('usertype');
+					$scope.username = $scope.user.username;
+					$scope.newaddress = $scope.user.address;
+					$scope.newemail = $scope.user.email;
+					$scope.newtel = $scope.user.tel;
+				}, function (response){
+					$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+				});
+			}
+			
+				
+				
+			//edit button
+			$scope.passwordEdit = false;
+			$scope.editPassword = function(){
+				if(!$scope.passwordEdit){
+					$scope.passwordEdit = true;
+					document.getElementById("editPassword").innerHTML = "Cancel";
+				}else{
+					document.getElementById("editPassword").innerHTML = "Edit";
+					$scope.passwordEdit = false;
+					$scope.oldPassword = null;
+					$scope.newPassword = null;
+					$scope.comfirmPassword = null;
+					$scope.postMsg = null;
+				}	
+			}
+			
+			//edit information
+			$scope.profilepost= function(){
+			
+				// if(sessionStorage.getItem('usertype') == 'Individual'){
+				// 	var url = '/userctrl/Home_Customer/' + sessionStorage.getItem('userid');
+				// }else{
+				// 	var url = '/userctrl/Business_Customer/' + sessionStorage.getItem('userid');
+				// }
+				var url = '/userctrl/' + sessionStorage.getItem('userid');
+
+				var config = {
+						headers : {
+								'Accept': 'application/json'
+								}
+				}
+				
+				var pwd = $scope.newPassword;
+				var postMsg = { 'Failed': false };
+				
+				if ($scope.passwordEdit){
+					if($scope.oldPassword != $scope.user.password){
+						postMsg = { 'Failed': true, 'message': 'The old password is not correct' };
+						pwd = $scope.user.password;
+					}else{
+						if ($scope.newPassword == null ||$scope.newPassword == ""){
+							postMsg = { 'Failed': true, 'message': 'New password cannnot be empty!' };
+							pwd = $scope.user.password;
+						}else if ($scope.newPassword != $scope.comfirmPassword){
+							postMsg = { 'Failed': true, 'message': 'Two password doesnot match!' };
+							pwd = $scope.user.password;
+						}else if ($scope.user.password == $scope.newPassword){
+							postMsg = { 'Failed': true, 'message': 'New password cannot be the same as the old password!' };
+							pwd = $scope.user.password;
+						}
+					}
+					
+					var data = {
+						username: $scope.user.username,
+						password: pwd,
+						address:$scope.newaddress,
+						email:$scope.newemail,
+						tel:$scope.newtel
+					}
+					
+					if(postMsg.Failed){
+						$scope.postMsg = postMsg;
+					}else{
+						$http.post(url,JSON.stringify(data), config).then(function (response){
+							$scope.postMsg= response.data;
+							if(!$scope.postMsg.Failed){
+								$scope.oldPassword = "";
+								$scope.newPassword = "";
+								$scope.comfirmPassword = "";
+							}
+						}, function (response){
+							$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+						});
+					}
+				
+				}else{
+					var data = {
+						username: $scope.user.name,
+						password: $scope.user.password,
+						address:$scope.newaddress,
+						email:$scope.newemail,
+						tel:$scope.newtel
+					}
+					
+					$http.post(url,JSON.stringify(data), config).then(function (response){
+						$scope.postMsg= response.data;
+						if(!$scope.postMsg.Failed){
+						}
+					}, function (response){
+						$scope.postMsg = "Error Status: " +  response.statusText;
+					});
+				}
+			}
+			
+			//logout
+			$scope.logout= function(){
+				sessionStorage.clear(); 
+				location.href = '/';
+			}
+			
+			//Delete
+			$scope.delete= function(){
+				if(confirm("You really want to delete this account?")){
+					var url = '/userctrl/' + sessionStorage.getItem('userid');
+					$http.delete(url).then(function (response){
+							$scope.postMsg= response.data;
+							if(!$scope.postMsg.Failed){
+								sessionStorage.clear(); 
+								location.href = '/';
+							}
+						}, function (response){
+							$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+						});
+				}
+			}
+		})
+		
+		profileModule.controller('searchController',function($scope,$http){
+			$scope.searchitems= function(key){
+				sessionStorage.setItem('keyword',$scope.search);
+				location.href = '/search';
+			}
+		})
+		
+		profileModule.controller('transactionController',function($scope,$http){
+			// if(sessionStorage.getItem('usertype') == 'Individual'){
+			// 	var url = '/transaction/Home/' + sessionStorage.getItem('userid');
+			// }else{
+			// 	var url = '/transaction/Business/' + sessionStorage.getItem('userid');
+			// }
+			var url = '/ManageTransaction/' + sessionStorage.getItem('userid');
+			$http.get(url).then(function (response){
+				$scope.postMsg= response.data;
+				// if(!$scope.postMsg.Failed){
+					$scope.transactions = $scope.postMsg;
+					// alert(JSON.stringify($scope.transactions));
+				// }
+			})
+		})
+	</script>
+    <body ng-app = "profile">
+        <!--=-------
+        Top
+    ------------>
+        <div class="banner-bg banner-sec">	
+	  		<div class="container">
+				<div class="header">
+				    <div class="logo">
+						<a href="/"><img src="images/logo_1.png" alt=""/></a>
+					</div>							 
+					<div class="top-nav">	
+						<ul class="nav">
+							<a class="shop" href="/login">LOG IN/SIGN UP</a>
+							<a class="shop" href="/products">PRODUCT</a>
+							<a class="shop" href="/profile">My ACCOUNT</a>
+							<a class="shop" href="/cart"><img src="images/cart.png" alt=""/></a>
+						</ul>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+	  		</div> 				 
+		</div>
+        <!--=-------
+        profile
+------------>
+        <div id = "profile" class = "container">
+			<div class = "col-md-8 col-md-offset-2 profile-show" ng-controller = "profileController">
+			    <div class="section-title text-center center">
+                    <h2>User Information</h2>
+                </div>
+				<form class="form-horizontal" name = "profileInfo">
+					<div class="form-group">
+                        <span class="col-sm-3 control-label">User Name:</span>
+                        <div class="col-sm-9">
+                            <h4>{{user.username}}</h4>
+                        </div>
+                    </div>
+					<div class="form-group">
+                        <span class="col-sm-3 control-label">Password:</span>
+                        <div class="col-sm-9">
+                            <button ng-model="editPassword" id = "editPassword" class="btn btn-default" ng-click="editPassword()">Edit</button>
+                        </div>
+                    </div>
+					<div class="form-group" ng-show = "passwordEdit">
+                        <span class="col-sm-3 control-label">Old Password:<label>*</label></span>
+                        <div class="col-sm-9">
+							<input ng-model="oldPassword" class="form-control" type="password" name="oldPassword">
+                        </div>
+                    </div>
+					<div class="form-group" ng-show = "passwordEdit">
+                        <span class="col-sm-3 control-label">New Password:<label>*</label></span>
+                        <div class="col-sm-9">
+							<input ng-model="newPassword" class="form-control" type="password" name="newPassword">
+                        </div>
+                    </div>
+					<div class="form-group" ng-show = "passwordEdit">
+                        <span class="col-sm-3 control-label">Comfirm Password:<label>*</label></span>
+                        <div class="col-sm-9">
+							<input ng-model="comfirmPassword" class="form-control" type="password" name="comfirmPassword">
+                        </div>
+                    </div>
+					<div class="form-group">
+                        <span class="col-sm-3 control-label">Address:</span>
+                        <div class="col-sm-9">
+							<input ng-model="newaddress" class="form-control" type="text" name="newaddress" >
+                        </div>
+                    </div>
+					<div class="form-group" ng-show ="usertype == 'Individual'">
+						<span class="col-sm-3 control-label">Gender:</span>
+                        <div class="col-sm-9">
+							<h4>{{user.gender}}</h4>
+                        </div>
+					</div>
+					<div class="form-group" ng-show ="usertype == 'Individual'">
+						<span class="col-sm-3 control-label">Age:</span>
+						<div class="col-sm-9">
+							<h4>{{user.age}}</h4>
+						</div>
+					</div>
+					<div class="form-group" ng-show ="usertype == 'Individual'">
+						<span class="col-sm-3 control-label">Income:</span>
+						<div class="col-sm-9">
+							<h4>{{user.income}}</h4>
+						</div>
+					</div>
+					<div class="form-group" ng-show ="usertype == 'Business'">
+						<span class="col-sm-3 control-label">Business Category:</span>
+						<div class="col-sm-9">
+							<h4>{{user.business_category}}</h4>
+						</div>
+					</div>
+					<div class="form-group" ng-show ="usertype == 'Business'">
+						<span class="col-sm-3 control-label">Annual Income:</span>
+						<div class="col-sm-9">
+							<h4>{{user.annual_income}}</h4>
+						</div>
+					</div>
+					<div class="form-group">
+                        <span class="col-sm-3 control-label">Email Address:</span>
+                        <div class="col-sm-9">
+							<input ng-model="newemail" class="form-control" type="email" name="newemail" >
+                        </div>
+                    </div>
+					<div class="form-group">
+                        <span class="col-sm-3 control-label">Telephone Number:</span>
+                        <div class="col-sm-9">
+							<input ng-model="newtel" class="form-control" type="text" name="newtel" placeholder="xxx-xxx-xxxx" ng-pattern="/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/">
+                        </div>
+                    </div>
+					<div class="col-md-9 col-md-offset-3" ng-show = "postMsg.Failed">
+							<div class="alert alert-danger">{{postMsg.message}}</div>
+					</div>
+					<div class="alert alert-danger col-md-12 text-center" ng-show = "profileInfo.newemail.$dirty && profileInfo.newemail.$invalid">
+						<span ng-show="profileInfo.newemail.$error.email">Illegal email</span>
+					</div>
+					<div class="alert alert-danger col-md-12 text-center" ng-show = "profileInfo.newtel.$dirty && profileInfo.newtel.$invalid">
+						<span ng-show="profileInfo.newtel.$error.pattern">Illegal phone number</span>
+					</div>
+                    <div class="form-group">
+                        <div class="col-md-5, col-md-offset-7 profile-btn-panel">
+                            <button type="submit" value="Save" class="btn btn-default" ng-click = "profilepost()" ng-disabled="profileInfo.newemail.$error.email || profileInfo.newtel.$error.pattern ">Save</button>
+                            <button value="logout" class="btn btn-default" ng-click = "logout()">logout</button>
+							<button value="delete" class="btn btn-default" ng-click = "delete()">Delete</button>
+                        </div>
+                    </div>
+				</form>
+			</div>
+			<div class="col-md-10 col-md-offset-1 profile-show" ng-controller="transactionController">
+				<div class="section-title text-center center">
+                    <h2>User Transactions</h2>
+                </div>
+                <div class="transaction-show col-md-6 col-md-offset-6">
+                        <ul class="trans_sort_nav">
+                                    <li>Sort : </li>
+                                    <li >Based on:</li> 
+                                    <li><select ng-model="sortcol">
+										   <option value="transaction_date">Time</option>
+                                           <option value="quantity">Quantity</option>
+                                           <option value="price">Price</option>
+                                         </select>
+                                    </li> |
+                                    <li>Order:</li> 
+                                    <li><select ng-model="sortord">
+                                           <option value="">low-to-high</option>
+                                           <option value="-">high-to-low</option>
+                                         </select>
+                                    </li>
+                                    <div class="clear"></div>	
+                         </ul>
+                         <div class="clearfix"></div>	
+                    </div>
+            <div id="class" align = "center" style="margin: 0cm 0cm 0pt; text-align: left">
+	            <table class="table">
+					<thead>
+						<tr>
+							<th>Order number</th>
+							<th>Date</th>
+							<th>Product ID</th>
+	                        <th>Price</th>
+	                        <th>Quantity</th>
+	                        <th>Price Of The Order</th>
+						</tr>
+					</thead>
+					<tbody ng-repeat = "transaction in transactions| orderBy: sortord+sortcol">
+	                    <tr>
+	                            <td>
+	                                {{$index+1}}
+	                            </td>
+	                            <td>
+	                                {{transaction.transaction_date}}
+	                            </td>
+	                            <td><a href="/single">
+	                                {{transaction.product_ID}}
+	                            </a></td>
+	                            <td>
+	                                {{transaction.price}}
+	                            </td>
+	                            <td>
+	                                {{transaction.quantity}}
+	                            </td>
+	                            <td>
+	                                {{transaction.price * transaction.quantity}}
+	                            </td>
+	                    </tr>
+					</tbody>
+	            </table>
+            </div>
+		</div>
+		</div>
+  <!------------------
+        footer
+     -------------------->
+	 <script>
+function initialize()
+{
+    var mapProp = {
+        center:new google.maps.LatLng(40.4447451,-79.9611917),
+        zoom:15,
+        mapTypeId:google.maps.MapTypeId.ROADMAP
+    };
+    var map=new google.maps.Map(document.getElementById("googleMap"), mapProp);
+}
+ 
+	google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+	<div class="footer">
+		<div class="container">
+			<div class="footer_top">
+				<div class="col-md-3">
+					<h3>Our Stores</h3>
+					<address class="address">
+						<p>135 North Bellefield Avenue, <br>
+							Pittsburgh, PA 15260</p>
+						<dl>
+							<dt></dt>
+							<dd>phone:<span> +1(412)-254-2478</span></dd>
+							<dd>E-mail:&nbsp; <span>info(at)buyshop.com</span></dd>
+						</dl>
+					</address>
+					<ul class="footer_social">
+						<li><a href=""> <i class="fb"> </i> </a></li>
+						<li><a href=""><i class="tw"> </i> </a></li>
+						<li><a href=""><i class="google"> </i> </a></li>
+						<li><a href=""><i class="instagram"> </i> </a></li>
+					</ul>
+				</div>
+				<div id="googleMap" style="height:240px;" class ="col-md-6" ></div>
+				<div class="col-md-3">
+					<h3>Support</h3>
+					<ul class="list">
+						<li><a href="#">Terms & Conditions</a></li>
+						<li><a href="#">FAQ</a></li>
+						<li><a href="#">Services</a></li>
+						<li><a href="#">Track Order</a></li>
+						<li><a href="#">About Us</a></li>
+						<li><a href="#">Contact Us</a></li>
+					</ul>
+					<div class="clearfix"> </div>
+				</div>
+				<div class="clearfix"> </div>
+			</div>
+			<div class="footer_bottom">
+				<div class="copy">
+					<p>Copyright © 2018 Buy_shop. Pitt IS 2560 All Rights Reserved.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+    </body>
+</html>

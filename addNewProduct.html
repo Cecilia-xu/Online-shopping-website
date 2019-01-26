@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add New Product</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+    <script type="text/javascript">
+
+        function cancelReadOnly() {
+            document.getElementById('btn_upload_file').disabled = false;
+        }
+
+        var productModule = angular.module("product", []);
+        productModule.controller('productController', ($scope, $http, $location)=>{
+
+            //get manager's name
+            $scope.current_username = sessionStorage.getItem('managername');
+
+            $scope.clearSession = function(){
+                sessionStorage.clear();
+            }
+
+			$scope.addProduct = function (argument) {
+				url = '/ManageProduct/newproduct';
+				var config = {
+					headers : {
+						'Accept': 'application/json'
+					}
+                };
+                var data = {
+                    productName: $scope.productName,
+                    kind: $scope.kind,
+                    size: $scope.size,
+                    inventory_amount : $scope.inventory_amount,
+                    price : $scope.price,
+                    img: $scope.picture,
+                    description: $scope.description
+                };
+                $http.post(url,JSON.stringify(data), config).then(function (response){
+                        $scope.postMsg= response.data;
+                        alert('success');
+                    }, function (response){
+                        $scope.postErrMsg = "Error Status: " +  response.statusText;
+                    });
+                // reset data fields
+		        $scope.productName = "";
+                $scope.kind = "";
+                $scope.size = "";
+                $scope.inventory_amount = "";
+                $scope.price = "";
+                $scope.picture = "";
+                $scope.description = "";
+            }; 
+
+            $scope.getInner = function(){
+               var route = angular.element($("#btn_choose_file")).val();
+               // alert(angular.element($("#btn_choose_file")).val());
+               $scope.picture = "images/" + route.substring(12,);
+            };
+
+            
+        });
+	</script>
+</head>
+<body ng-app="product">
+<!--=-------
+        Top
+    ------------>
+        <div id="nav" class="container-fluid" >
+            <nav class="navbar navbar-custom">
+                <div class="container">
+                    <div class="col-md-9">
+                        <div class="navbar-header col-md-2 logo" ng-controller="productController">
+                            <h1><a class="navbar-brand" ng-click="clearSession()" href="/"><span style="color: blue;">Buy</span>shop</a></h1>
+                        </div>
+                        <div>
+                            <ul class="col-md-7 nav navbar-nav menu" ng-controller="productController">
+                                <li class="active grid nav-item nav-link"><a class="color1">WELCOME, MANAGER {{ current_username }}</a></li>
+                                <li class="active grid nav-item nav-link"><a class="color2" href="/updateManagerInfo">my info</a></li>
+                                <li class="active grid nav-item nav-link"><a ng-click="clearSession()" class="color3" href="/">Log Out</a></li>             
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+            </nav>
+            <div class="clearfix"></div>
+        </div>
+
+        <!-- body -->
+
+        <div class="text-center">
+                <h1>Add Products Page</h1>
+                <h3>You Can Add New Product Here</h3>
+        </div>
+        <div class="container" ng-controller="productController">
+
+            <div class="col-md-1"></div>
+            <div class="col-md-6" >
+
+                <form class="form-horizontal" ng-submit="addProduct()">
+        
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input ng-model="productName" id="productName" class="form-control" type="text" required name="productName" >
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="kind">Product Kind</label>
+                        <input ng-model="kind" id="kind" class="form-control" type="text" required name="kind">
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="size">Product Size</label>
+                        <input ng-model="size" id="size" class="form-control" type="text" required name="size">
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="inventory_amount">Product Inventory Amount</label>
+                        <input ng-model="inventory_amount" id="inventory_amount" class="form-control" type="text" placeholder="Enter number only" required name="inventory_amount" onkeyup="value=value.replace(/[^\d.]/g,'')">
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="price">Product Price</label>
+                        <input ng-model="price" id="price" class="form-control" type="text" required name="price" placeholder="Enter number only" onkeyup="value=value.replace(/[^\d.]/g,'')">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="picture">Picture</label>
+                        <input ng-model="picture" id="picture" class="form-control" type="text" required name="picture" readonly>
+                    </div>    
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input ng-model="description" id="description" class="form-control" type="text" required name="description">
+                    </div>
+                    
+                    <div class="form-group text-center">
+                        <button type="submit" value="Submit" class="btn btn-default">Submit</button>
+                        <a href="/managerHome"><button type="button" value="Back" class="btn btn-default">Back</button></a>
+                    </div> 
+                </form>
+            </div>
+
+            <div class="col-md-2"></div>
+            <div class="col-md-3">
+                <form action="uploadGraph" enctype="multipart/form-data" method="post" >
+                    
+                    <label class="custom-file-label">Select Local Picture to Upload</label>
+                    <input id="btn_choose_file" type="file" class="custom-file-input" name="upload" multiple="multiple" onchange="cancelReadOnly()" ng-model="upload">
+                    <input type="submit" id="btn_upload_file" value="Upload file" class="btn btn-default" disabled="true" ng-click="getInner()"/>
+                    <!-- upload.files[0].name -->
+                    
+                </form>
+            </div>
+        </div>
+
+        
+</body>
+</html>

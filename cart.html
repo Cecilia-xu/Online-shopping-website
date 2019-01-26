@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Cart</title>
+        <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/styleUser.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/newheader.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+		<script type="text/javascript" src="javascripts/jquery-1.11.1.min.js"></script>
+	</head>
+	<script>
+		cartModule = angular.module('cart',[]);
+		cartModule.controller('cartController',function($scope,$http){
+			if (!sessionStorage.getItem('userid')){
+				alert("User session expired, Please login");
+				location.href = '/login';
+			}else{	
+				var url = '/cartctrl/findbyuser/'+sessionStorage.getItem('userid');
+				$http.get(url).then(function (response){
+					$scope.postMsg= response.data;
+					if(!$scope.postMsg.Failed){
+						$scope.cart = $scope.postMsg;
+						// alert(JSON.stringify($scope.cart));
+					}
+				})
+			}
+
+			//get the sum
+			$scope.getItemsPriceSum = function(){
+				var sum = 0;
+				angular.forEach($scope.cart, function(each){
+					sum += each.cPrice * each.cQuantity;
+				});
+				return sum.toFixed(2);
+			};
+			
+			//get the Deliever Fee
+			$scope.getDelieverFee = function(){
+				var sum = 0;
+				angular.forEach($scope.cart, function(each){
+					sum += 5.00 ;
+				});
+				return sum.toFixed(2);
+			};
+			
+			
+			//Delete an item
+			$scope.removeitem= function(id){
+				if(confirm("You really want to delete this item?")){
+					var url = '/cartctrl/' + id;
+					$http.delete(url).then(function (response){
+						$scope.postMsg= response.data;
+						if(!$scope.postMsg.Failed){
+							url = '/cartctrl';
+							$http.get(url).then(function (response){
+								$scope.postMsg= response.data;
+								if(!$scope.postMsg.Failed){
+									$scope.cart = $scope.postMsg
+								}
+							})
+						}
+					}, function (response){
+						$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+					});
+				}
+			}
+		
+		// edit the inventory
+			$scope.editinventory= function(productID, Quantity){
+				var url = '/ManageProduct/editinventory'
+				var config = {
+						headers : {
+								'Accept': 'application/json'
+								}
+				}
+				var data = {
+					product_ID: productID,
+					// store_ID: storeID,
+					quantity: Quantity,
+				}
+				$http.post(url,JSON.stringify(data), config).then(function (response){
+					$scope.postMsg= response.data;
+				})
+			}
+		
+		
+		// clear the cart
+			$scope.clearcart= function(){
+				url = '/ManageTransaction/newtransaction';
+				
+				var config = {
+						headers : {
+								'Accept': 'application/json'
+								}
+				}
+				
+				angular.forEach($scope.cart, function(each){
+					// alert(each.cId);
+					var data = {
+						user_ID: sessionStorage.getItem('userid'),
+						product_ID: each.cId,
+						// storeid: each.cstore_ID,
+						price: each.cPrice,
+						quantity:each.cQuantity
+					}
+					
+					$http.post(url,JSON.stringify(data), config).then(function (response){
+						$scope.postMsg= response.data;
+						if(!$scope.postMsg.Failed){
+							var url = '/cartctrl/' + each._id;
+							$http.delete(url).then(function (response){
+								$scope.postMsg= response.data;
+								if(!$scope.postMsg.Failed){
+									$scope.editinventory(each.cId, each.cQuantity);
+									location.href = '/products';
+								}
+							})
+						}
+					})
+				});
+			}
+		})
+
+		cartModule.controller('searchController',function($scope,$http){
+			$scope.searchitems= function(key){
+				sessionStorage.setItem('keyword',$scope.search);
+				location.href = '/search';
+			}
+		})		
+	</script>
+	
+	<body ng-app = "cart">
+        <!--=-------
+        Top
+    ------------>
+       <!--  <div id="nav" class="container-fluid">
+            <nav class="navbar navbar-custom">
+                <div class="container">
+					<div class="col-md-9">
+						<div class="navbar-header col-md-2 logo">
+							<h1><a class="navbar-brand" href="/"><span>Buy</span>shop</a></h1>
+						</div>
+						<div>
+						<ul class="col-md-7 nav navbar-nav menu">
+							<li class="active grid nav-item nav-link"><a class="color1" href="/products">Products</a></li>				
+							<li class="active grid nav-item nav-link"><a class="color2" href="/profile">My Account</a></li>
+							<li class="active grid nav-item nav-link"><a class="color3" href="/cart">Cart</a></li>
+						</ul>
+						</div>
+					</div>
+					<form class="col-md-3 search" ng-controller = "searchController">
+							<input type="text" name="s" class="textbox" placeholder="search products" ng-model = "search" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Search';}">
+							<input type="submit" value="Subscribe" id="submit" name="submit" ng-click = "searchitems()">
+					</form>
+					<div class="clearfix"></div>
+				</div>
+            </nav>
+			<div class="clearfix"></div>
+        </div> -->
+        <div class="banner-bg banner-sec">	
+	  		<div class="container">
+				<div class="header">
+				    <div class="logo">
+						<a href="/"><img src="images/logo_1.png" alt=""/></a>
+					</div>							 
+					<div class="top-nav">	
+						<ul class="nav">
+							<a class="shop" href="/login">LOG IN/SIGN UP</a>
+							<a class="shop" href="/products">PRODUCT</a>
+							<a class="shop" href="/profile">My ACCOUNT</a>
+							<a class="shop" href="/cart"><img src="images/cart.png" alt=""/></a>
+						</ul>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+	  		</div> 				 
+		</div>
+	
+	
+        <!--=-------
+        Cart
+    ------------>
+	<div id="cart">
+	<div class="container" ng-controller = "cartController">
+		<form ng-show = "cart.length != 0">
+		<div class="col-md-9 cart-items">
+			<div class="title">
+				<h3>My Shopping Cart</h3>
+			</div>
+			 <div class="cart-header" ng-repeat = "item in cart">
+				 <div class="remove" ng-click="removeitem(item._id)"> </div>
+				 <div class="cart-sec simpleCart_shelfItem">
+						<div class="cart-item cyc">
+							 <img ng-src="{{item.cImgSrc}}" class="img-responsive" alt=""/>
+						</div>
+					   <div class="cart-item-info">
+						<h3><a href="#">{{item.cName}}</a><span>No: {{$index+1}}</span></h3>
+						<ul class="qty">
+							<li><p>Price : ${{item.cPrice}}</p></li>
+							<li><p>Qty : {{item.cQuantity}}</p></li>
+						</ul>
+						<div class="delivery">
+							 <p>Service Charges : $5.00</p>
+							 <span>Delivered in 2-3 bussiness days</span>
+							 <div class="clearfix"></div>
+				        </div>	
+					   </div>
+					   <div class="clearfix"></div>
+											
+				  </div>
+			 </div>	
+		 </div>
+		 <div class="col-md-3 cart-total">
+			 <a class="continue" href="/products">Continue to basket</a>
+			 <div class="price-details">
+				 <h3>Price Details</h3>
+				 <span>Total</span>
+				 <span class="total1">{{getItemsPriceSum()}}</span>
+				 <span>Discount</span>
+				 <span class="total1">---</span>
+				 <span>Delivery Charges</span>
+				 <span class="total1">{{getDelieverFee()}}</span>
+				 <div class="clearfix"></div>				 
+			 </div>	
+			 <ul class="total_price">
+			   <li class="last_price"> <h4>TOTAL</h4></li>	
+			   <li class="last_price">$<span ng-bind = "getItemsPriceSum()*1+getDelieverFee()*1"></span></li>
+			   <div class="clearfix"> </div>
+			 </ul>
+			 <div class="clearfix"></div>
+			 <a class="order" ng-click = "clearcart()">Place Order</a>
+			</div>
+		</form>
+		<div class="clearfix"> </div>
+		<div class="container noresult" ng-show = "cart.length == 0">
+			<h3>Your shopping cart is empty</h3>
+			<p>click <a href = "/products">here</a> go back find more products<p>
+		</div>
+	 </div>
+</div>
+ <!------------------
+        footer
+     -------------------->
+	 <script>
+function initialize()
+{
+    var mapProp = {
+        center:new google.maps.LatLng(40.4447451,-79.9611917),
+        zoom:15,
+        mapTypeId:google.maps.MapTypeId.ROADMAP
+    };
+    var map=new google.maps.Map(document.getElementById("googleMap"), mapProp);
+}
+ 
+	google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+	<div class="footer">
+		<div class="container">
+			<div class="footer_top">
+				<div class="col-md-3">
+					<h3>Our Stores</h3>
+					<address class="address">
+						<p>135 North Bellefield Avenue, <br>
+							Pittsburgh, PA 15260</p>
+						<dl>
+							<dt></dt>
+							<dd>phone:<span> +1(412)-254-2478</span></dd>
+							<dd>E-mail:&nbsp; <span>info(at)buyshop.com</span></dd>
+						</dl>
+					</address>
+					<ul class="footer_social">
+						<li><a href=""> <i class="fb"> </i> </a></li>
+						<li><a href=""><i class="tw"> </i> </a></li>
+						<li><a href=""><i class="google"> </i> </a></li>
+						<li><a href=""><i class="instagram"> </i> </a></li>
+					</ul>
+				</div>
+				<div id="googleMap" style="height:240px;" class ="col-md-6" ></div>
+				<div class="col-md-3">
+					<h3>Support</h3>
+					<ul class="list">
+						<li><a href="#">Terms & Conditions</a></li>
+						<li><a href="#">FAQ</a></li>
+						<li><a href="#">Services</a></li>
+						<li><a href="#">Track Order</a></li>
+						<li><a href="#">About Us</a></li>
+						<li><a href="#">Contact Us</a></li>
+					</ul>
+					<div class="clearfix"> </div>
+				</div>
+				<div class="clearfix"> </div>
+			</div>
+			<div class="footer_bottom">
+				<div class="copy">
+					<p>Copyright © 2018 Buy_shop. Pitt IS 2560 All Rights Reserved.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+    </body>
+</html>

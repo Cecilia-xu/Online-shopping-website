@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>single</title>
+        <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/styleUser.css">
+        <link rel="stylesheet" type="text/css"  href="stylesheets/newheader.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	</head>
+	    <script>
+		singleModule = angular.module('single',[]);
+		singleModule.controller('singleController',function($scope,$http){
+			if (!sessionStorage.getItem('product')){
+				location.href = '/products';
+			}else{
+				$scope.curproduct = angular.fromJson(sessionStorage.getItem('product'));
+		}
+		
+				
+			$scope.addToCart = function(){
+			
+			if (!sessionStorage.getItem('userid')){
+				alert("User session expired, Please login");
+				location.href = '/login';
+			}else{
+					var url = '/cartctrl/addtocart';
+					var config = {
+						headers : {
+								'Accept': 'application/json'
+								}
+						}
+						
+						
+					var data = {
+						uId: sessionStorage.getItem('userid'),
+						// uType:sessionStorage.getItem('usertype'),
+						cId: $scope.curproduct._id,
+						// cstore_ID: $scope.curproduct.store_ID,
+						cName: $scope.curproduct.productName,
+						cPrice: $scope.curproduct.price,
+						cImgSrc: $scope.curproduct.img,
+						cQuantity: $scope.quantity
+					}
+				
+				$http.post(url,JSON.stringify(data), config).then(function (response){
+					$scope.postMsg= response.data;
+					if(!$scope.postMsg.Failed){
+						sessionStorage.removeItem('product');
+						location.href = '/products';
+					}
+				}, function (response){
+					$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+				});
+			}
+		}
+	})
+	
+		singleModule.controller('searchController',function($scope,$http){
+			$scope.searchitems= function(key){
+				sessionStorage.setItem('keyword',$scope.search);
+				location.href = '/search';
+			}
+		})
+	</script>
+	<body ng-app="single">
+        <!--=-------
+        Top
+    ------------>
+        <div class="banner-bg banner-sec">	
+	  		<div class="container">
+				<div class="header">
+				    <div class="logo">
+						<a href="/"><img src="images/logo_1.png" alt=""/></a>
+					</div>							 
+					<div class="top-nav">	
+						<ul class="nav">
+							<a class="shop" href="/login">LOG IN/SIGN UP</a>
+							<a class="shop" href="/products">PRODUCT</a>
+							<a class="shop" href="/profile">My ACCOUNT</a>
+							<a class="shop" href="/cart"><img src="images/cart.png" alt=""/></a>
+						</ul>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+	  		</div> 				 
+		</div>
+	
+	
+        <!--=-------
+        single
+    ------------>
+	<div class="single">
+		<!-- container -->
+		<div class="container" ng-controller ="singleController">
+			<div class="single-grids">
+				<div class="col-md-9 col-md-off-3">
+					<div class="single-left-left">
+						<img ng-src="{{curproduct.img}}" style="display: inline; width: 300px; height: 400px; opacity: 1;">
+						<div class="clearfix"></div>		
+					</div>
+					<div class="single-left-right">
+						<div class="single-left-info">
+							<h3>{{curproduct.productName}}</h3>
+							<p>Price: ${{curproduct.price}}</p>
+							<p>Size: {{curproduct.size}}</p>
+							<p>Qty:
+							<input ng-init="quantity=1" ng-model="quantity" type="number" min="1"></input>
+							</p>
+						</div>
+						<div class="select-qty">
+							<div class="buy-now" ng-show = "curproduct.inventory_amount*1 - quantity*1>= 0" >
+								<a ng-click="addToCart()">Put into cart</a>
+							</div>
+							<div class="clearfix"> </div>
+							<div class="free" ng-show = "curproduct.inventory_amount*1 - quantity*1>= 0">
+								<p>20 day returns Free Delivery *</p>
+							</div>
+						</div>
+						<div class="alert alert-danger" ng-show = "curproduct.inventory_amount*1 - quantity*1 < 0" >
+							<h5>The inventory is not enough.</h5>
+						</div>
+					</div>
+					<div class="clearfix"> </div>
+					<div class="product-details">
+						<h3>PRODUCT DETAILS</h3>
+						<p>{{curproduct.description}}</p>
+					</div>
+				</div>
+				<!-- <div class="col-md-3 side-bar">
+					<div class="categories">
+						<h3>CATEGORIES</h3>
+						<ul>
+							<li><a href="#">accessories</a></li>
+							<li><a href="#">basics</a></li>
+							<li><a href="#">jackets</a></li>
+							<li><a href="#">jeans</a></li>
+							<li><a href="#">knits</a></li>
+							<li><a href="#">overalls</a></li>
+							<li><a href="#">over coats</a></li>
+							<li><a href="#">shoes</a></li>
+							<li><a href="#">sweatshirts</a></li>
+							<li><a href="#">trousers</a></li>
+							<li><a href="#"><del>tops</del></a></li>
+							<li><a href="#">watersuits</a></li>
+						</ul>
+					</div>
+				</div> -->
+				<div class="clearfix"> </div>
+			</div>
+		</div>
+		<!-- //container -->
+	</div>
+ <!------------------
+        footer
+     -------------------->
+	 <script>
+function initialize()
+{
+    var mapProp = {
+        center:new google.maps.LatLng(40.4447451,-79.9611917),
+        zoom:15,
+        mapTypeId:google.maps.MapTypeId.ROADMAP
+    };
+    var map=new google.maps.Map(document.getElementById("googleMap"), mapProp);
+}
+ 
+	google.maps.event.addDomListener(window, 'load', initialize);
+	</script>
+	<div class="footer">
+		<div class="container">
+			<div class="footer_top">
+				<div class="col-md-3">
+					<h3>Our Stores</h3>
+					<address class="address">
+						<p>135 North Bellefield Avenue, <br>
+							Pittsburgh, PA 15260</p>
+						<dl>
+							<dt></dt>
+							<dd>phone:<span> +1(412)-254-2478</span></dd>
+							<dd>E-mail:&nbsp; <span>info(at)buyshop.com</span></dd>
+						</dl>
+					</address>
+					<ul class="footer_social">
+						<li><a href=""> <i class="fb"> </i> </a></li>
+						<li><a href=""><i class="tw"> </i> </a></li>
+						<li><a href=""><i class="google"> </i> </a></li>
+						<li><a href=""><i class="instagram"> </i> </a></li>
+					</ul>
+				</div>
+				<div id="googleMap" style="height:240px;" class ="col-md-6" ></div>
+				<div class="col-md-3">
+					<h3>Support</h3>
+					<ul class="list">
+						<li><a href="#">Terms & Conditions</a></li>
+						<li><a href="#">FAQ</a></li>
+						<li><a href="#">Services</a></li>
+						<li><a href="#">Track Order</a></li>
+						<li><a href="#">About Us</a></li>
+						<li><a href="#">Contact Us</a></li>
+					</ul>
+					<div class="clearfix"> </div>
+				</div>
+				<div class="clearfix"> </div>
+			</div>
+			<div class="footer_bottom">
+				<div class="copy">
+					<p>Copyright © 2018 Buy_shop. Pitt IS 2560 All Rights Reserved.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+    </body>
+</html>

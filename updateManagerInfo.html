@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manager List</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+
+		/*
+			1. get the manager's info and fill the form
+			2. update info
+		*/
+
+		var updateManagerModule = angular.module("updateManager", []);
+		updateManagerModule.controller("updateManagerController", ($scope, $http, $location)=>{
+
+			$scope.managerid = sessionStorage.getItem('managerid');
+
+
+			/*
+				get manager's own information
+			*/
+			var url = "/ManagerAccount/" + $scope.managerid;
+			// alert(url);
+			$http.get(url).then(function(response){
+				$scope.manager = response.data;
+				// alert($scope.manager.name);
+
+				$scope.manager_id = $scope.manager._id;
+				$scope.real_name = $scope.manager.name;
+				$scope.username = $scope.manager.username;
+				$scope.password = $scope.manager.password;
+				$scope.email = $scope.manager.email;
+				$scope.telephone = $scope.manager.tel;
+
+			}, function(response){
+				$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+			});
+
+			
+			/*
+				update information
+			*/
+			$scope.updateInfo = function(){
+
+				var config = {
+					headers : {
+						'Accept': 'application/json'
+					}
+				};
+
+				var updateData = {
+					name: $scope.real_name,
+					username: $scope.username,
+					password: $scope.password,
+					email: $scope.email,
+					tel: $scope.telephone
+				};
+				$http.post(url,JSON.stringify(updateData), config).then(function (response){
+					$scope.postMsg = response.data.message;
+					alert($scope.postMsg);
+				}, function (response){
+					$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+				});
+
+			}
+
+		});
+	</script>
+</head>
+<body>
+	<div class="container" ng-app="updateManager">
+    	<div class="col-md-3"></div>
+    	<div class="col-md-6" ng-controller="updateManagerController">
+    		<div class="text-center">
+    			<h2>MANAGER PROFILE</h2>
+    			<p>You Can Update Your Information Here</p>
+    		</div>
+    		<form class="form-horizontal" ng-submit="loginpost()">
+
+    			<div class="form-group">
+	                <label for="manager_id">Manager ID</label>
+	                <input ng-model="manager_id" id="manager_id" class="form-control" type="text" readonly="true" name="manager_id">
+	            </div>
+
+    			<div class="form-group">
+	                <label for="real_name">Real Name</label>
+	                <input ng-model="real_name" id="real_name" class="form-control" type="text" required name="real_name">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="username">UserName</label>
+	                <input ng-model="username" id="username" class="form-control" type="text" required name="username">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="password">Password</label>
+	                <input ng-model="password" id="password" class="form-control" type="text" required name="password">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="email">Email</label>
+	                <input ng-model="email" id="email" class="form-control" type="text" required name="email">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="telephone">Telephone</label>
+	                <input ng-model="telephone" id="telephone" class="form-control" type="text" required name="telephone">
+	            </div>
+                
+                
+                <div>
+                    <div class="text-center">
+                        <button type="submit" value="Update" class="btn btn-default" ng-click="updateInfo()">Update</button>
+                        <a href="/managerHome"><button type="button" value="Back" class="btn btn-default">Back</button></a>
+                    </div>
+                </div> 
+    		</form>
+    	</div>
+    </div>
+</body>
+</html>

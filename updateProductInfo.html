@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Update Product</title>
+    <link rel="stylesheet" type="text/css"  href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css"  href="stylesheets/style.css">
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJW4jsPlNKgv6jFm3B5Edp5ywgdqLWdmc&sensor=false async defer"></script>
+	<script>
+
+		function cancelReadOnly() {
+            document.getElementById('btn_upload_file').disabled = false;
+        }
+
+		/*
+			1. get the product's info and fill the form
+			2. update info
+		*/
+
+		var updateProductModule = angular.module("updateProduct", []);
+		updateProductModule.controller("updateProductController", ($scope, $http, $location)=>{
+
+			$scope.productid = sessionStorage.getItem('productID');
+			// alert($scope.productid);
+
+
+			/*
+				get product's own information
+			*/
+			var url = "/ManageProduct/" + $scope.productid;
+			$http.get(url).then(function(response){
+				$scope.product = response.data;//所有product信息放进product变量（json格式）
+				// alert($scope.manager.name);
+
+				$scope.product_id = $scope.product._id; //将查到的_id属性放到输入框里
+				$scope.product_name = $scope.product.productName,
+				$scope.kind = $scope.product.kind,
+				$scope.size = $scope.product.size,
+				$scope.inventory_amount = $scope.product.inventory_amount,
+				$scope.price = $scope.product.price,
+				$scope.picture = $scope.product.img,
+				$scope.description = $scope.product.description
+
+			}, function(response){
+				$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+			});
+
+			
+			/*
+				update information
+			*/
+			$scope.updateInfo = function(){
+				var url2 = '/ManageProduct/update/' + $scope.productid;//session中取出的id
+				var config = {
+					headers : {
+						'Accept': 'application/json'
+					}
+				};
+
+				var updateData = {
+					//name: $scope.real_name,					
+					productName: $scope.product_name,
+                    kind: $scope.kind,
+                    size: $scope.size,
+                    inventory_amount : $scope.inventory_amount,
+                    price : $scope.price,
+                    img: $scope.picture,
+                    description: $scope.description
+				};
+				$http.post(url2 ,JSON.stringify(updateData), config).then(function (response){
+					$scope.postMsg = response.data.message;
+					alert($scope.postMsg);
+				}, function (response){
+					$scope.postMsg = { 'Failed': true, 'message': "Error Status: " +  response.statusText};
+				});
+
+			};
+
+			$scope.getInner = function(){
+               var route = angular.element($("#btn_choose_file")).val();
+               $scope.picture = "images/" + route.substring(12,);
+            };
+
+		});
+	</script>
+</head>
+<body>
+
+	<div class="text-center">
+		<div class="text-center">
+    			<!-- <h1>{{a}}</h1> -->
+    			<h2>PRODUCT PROFILE</h2>
+    			<p>You Can Update Your Product Here</p>
+    		</div>
+	</div>
+
+	<div class="container" ng-app="updateProduct" ng-controller="updateProductController">
+    	<div class="col-md-1"></div>
+    	<div class="col-md-6" >
+    		<form class="form-horizontal" ng-submit="updateInfo()">
+
+    			<div class="form-group">
+	                <label for="product_id">Product ID</label>
+	                <input ng-model="product_id" id="product_id" class="form-control" type="text" readonly="true" name="product_id" disabled="disabled">
+	            </div>
+
+    			<div class="form-group">
+	                <label for="product_name">Product Name</label>
+	                <input ng-model="product_name" id="product_name" class="form-control" type="text" required name="product_name">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="kind">Kind</label>
+	                <input ng-model="kind" id="kind" class="form-control" type="text" required name="kind">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="size">Size</label>
+	                <input ng-model="size" id="size" class="form-control" type="text" required name="size">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="inventory_amount">Inventory Amount</label>
+	                <input ng-model="inventory_amount" id="inventory_amount" class="form-control" type="text" required name="inventory_amount" onkeyup="value=value.replace(/[^\d.]/g,'')">
+	            </div>
+
+	            <div class="form-group">
+	                <label for="price">Price</label>
+	                <input ng-model="price" id="price" class="form-control" type="text" required name="price" onkeyup="value=value.replace(/[^\d.]/g,'')">
+				</div>
+
+				<div class="form-group">
+	                <label for="picture">Picture</label>
+	                <input ng-model="picture" id="picture" class="form-control" type="text" required name="picture" readonly>
+				</div>
+				
+				<div class="form-group">
+	                <label for="description">Description</label>
+	                <input ng-model="description" id="description" class="form-control" type="text" required name="description">
+	            </div>
+                
+                
+                <div>
+                    <div class="text-center">
+                        <button type="submit" value="Update" class="btn btn-default">Update</button>
+                        <a href="/viewProduct"><button type="button" value="Back" class="btn btn-default">Back</button></a>
+                    </div>
+                </div> 
+    		</form>
+    	</div>
+    	<div class="col-md-2"></div>
+    	<div class="col-md-3">
+    		<form action="uploadGraph" enctype="multipart/form-data" method="post" >
+                <label class="custom-file-label">Select Local Picture to Upload</label>
+                <input id="btn_choose_file" type="file" class="custom-file-input" name="upload" multiple="multiple" onchange="cancelReadOnly()" ng-model="upload">
+                <input type="submit" id="btn_upload_file" value="Upload file" class="btn btn-default" disabled="true" ng-click="getInner()"/>
+            </form>
+            <div id="img-screen" style="margin-top: 20px;">
+            	<img ng-src="{{picture}}" style="width: 100%; height: 400px;">
+            </div>
+    	</div>
+    </div>
+</body>
+</html>
